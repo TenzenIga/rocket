@@ -1,25 +1,56 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from 'react';
+import { getPosts, getUserById, getUsers, IPost, IUser } from './api';
+import { GlobalStyle, Title, Wrapper } from './App.styles';
+import PostItem from './components/PostItem';
+import SearchInput from './components/SearchInput';
 
 function App() {
+  const [posts, setPosts] = useState<IPost[]>([]);
+  const [users, setUsers] = useState<IUser[]>([]);
+  const [searchValue, setSearchValue] = useState('');
+  const [filteredPosts, setFilteredPosts] = useState<IPost[]>([]);
+
+
+  useEffect(() => {
+    getPosts()
+      .then(posts => {
+        setPosts(posts)
+      })
+    getUsers()
+      .then(users => setUsers(users))
+  }, [])
+
+
+  
+  useEffect(() => {
+    setFilteredPosts(
+      posts.filter(p => p.body.toLowerCase().includes(searchValue))    
+    )
+  }, [searchValue, posts])
+  
+  const postsList = filteredPosts.map((post:IPost) =>{
+    let user = getUserById(users, post.userId);
+
+    return user ? { ...post, ...user} : null;
+})
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+    <GlobalStyle />
+      <Wrapper>
+        <Title>Posts</Title>
+        <SearchInput searchValue={searchValue} setSearchValue = {setSearchValue} />
+        <>
+          {
+            postsList.map(post => {
+              return post && <PostItem post={post} />
+              }
+            )
+          }
+        </>
+      
+      </Wrapper>
+    </>
   );
 }
 
